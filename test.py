@@ -1,9 +1,14 @@
-from apy import endpoint, app
+from apy import Endpoint, app
 
-@endpoint('/main')
-def main(*args,**kwargs):
+@Endpoint('/main')
+class Main:
     '''Basic example returns a json response'''
-    return {'response': ['hello','world']}
+
+    def get(*args,**kwargs):
+        return {'response': ['hello','world']}
+
+    def post(*args,**kwargs):
+        return {'response': ['you','posted']}
 
 app.debug = True
 app.run()
