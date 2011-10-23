@@ -10,5 +10,11 @@ class Main:
     def post(*args,**kwargs):
         return {'response': ['you','posted']}
 
+    def put(*args,**kwargs):
+        return {'response': ['you','put', {'some': 'value'}]}
+
+    def delete(*args,**kwargs):
+        return {'response': {'status': 'success'}}
+
 app.debug = True
 app.run()

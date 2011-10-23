@@ -1,7 +1,7 @@
 from flask import Flask
 from flask.views import MethodView
 
-import json
+import json, re
 
 from authentication import *
 from converters import *
@@ -35,7 +35,6 @@ class Endpoint(object):
         print "Generated new path descriptor: %s" % path
         return path
 
-    @classmethod
     def response(self,output,*args,**kwargs):
         '''Handles permuting the output data based on the supplied params'''
         content_type = kwargs['content_type']
@@ -54,20 +53,28 @@ class Endpoint(object):
 
         class Wrapped(cls,MethodView,object):
 
+            methods = ['get','post','put','delete','head']
+
             def __init__(self,*args,**kwargs):
                 self.data = data
+                for method in self.methods: 
+                    self.__setattr__(method,self.httpgenerator(method))
 
             def __getattr__(self,key):  
+                match = re.search('error_(?P<code>\d+)',key)
+                if match: return lambda *args,**kwargs: self.__error__(match.group('code'),*args,**kwargs)
                 return data[key]
 
-            def get(self,*args,**kwargs): return self.__http__('get',*args,**kwargs)
-            def head(self,*args,**kwargs): return self.__http__('head',*args,**kwargs)
-            def post(self,*args,**kwargs): return self.__http__('post',*args,**kwargs)
-            def put(self,*args,**kwargs): return self.__http__('put',*args,**kwargs)
-            def delete(self,*args,**kwargs): return self.__http__('delete',*args,**kwargs)
+            def httpgenerator(self,method):
+
+                def http_response(*args,**kwargs):
+                    return self.__http__(method,*args,**kwargs)
+
+                return http_response
 
             def __http__(self,method,*args,**kwargs):
-            
+                
+                print "Handling method %s" % method
                 def handler(env,start_response,*args,**kwargs):
                     # Manage the output content type
                     if 'content_type' in kwargs: 
@@ -76,11 +83,18 @@ class Endpoint(object):
                         kwargs['content_type'] = content_type
                     else:
                         kwargs['content_type'] = self.default_type
-                    output = getattr(cls,method)(self,*args,**kwargs)
-                    formatted = response(output,*args,**kwargs)
-                    return start_response(200,[])(formatted)
+                    try:
+                        output = getattr(cls,method)(self,*args,**kwargs)
+                        formatted = response(output,*args,**kwargs)
+                        return start_response(200,[])(formatted)
+                    except:
+                        return self.error_501(env,start_response)
 
                 return handler
+
+            def __error__(self,code,env,start_response,*args,**kwargs):
+                print code,env,start_response
+                return start_response(int(code),[])('error')
 
         __app__.add_url_rule(self.path, view_func=Wrapped.as_view(cls.__name__))
 
