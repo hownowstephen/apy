@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask.views import MethodView
 
 import json, re
@@ -56,26 +56,36 @@ class Endpoint(object):
             methods = ['get','post','put','delete','head']
 
             def __init__(self,*args,**kwargs):
+                '''Initialize data and http methods'''
                 self.data = data
                 for method in self.methods: 
                     self.__setattr__(method,self.httpgenerator(method))
 
             def __getattr__(self,key):  
+                '''Attempts to catch any calls to specific http errors and abstract those to the __error__ handler'''
                 match = re.search('error_(?P<code>\d+)',key)
                 if match: return lambda *args,**kwargs: self.__error__(match.group('code'),*args,**kwargs)
                 return data[key]
 
             def httpgenerator(self,method):
+                '''Generator function to pre-define routing of http functions to the __http__ handler'''
 
                 def http_response(*args,**kwargs):
+                    '''Wrapper to return a HTTP response object'''
                     return self.__http__(method,*args,**kwargs)
 
                 return http_response
 
             def __http__(self,method,*args,**kwargs):
-                
-                print "Handling method %s" % method
-                def handler(env,start_response,*args,**kwargs):
+                '''http request wrapper, returns a proper handler'''
+
+                # Update our kwargs with request args, so they get passed to the higher level handler
+                kwargs.update(request.args)
+                for k,v in kwargs.iteritems():
+                    if type(v) is list and len(v) == 1: kwargs[k] = v[0]
+
+                def handler(env,start_response):
+                    '''Actual http handler, uses the response function for the supplied method'''
                     # Manage the output content type
                     if 'content_type' in kwargs: 
                         content_type = kwargs['content_type'].strip('.')
@@ -93,6 +103,7 @@ class Endpoint(object):
                 return handler
 
             def __error__(self,code,env,start_response,*args,**kwargs):
+                '''Error encountered, start handling the error'''
                 print code,env,start_response
                 return start_response(int(code),[])('error')
 
