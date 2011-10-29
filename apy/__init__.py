@@ -1,7 +1,8 @@
 from flask import Flask, request
 from flask.views import MethodView
+from werkzeug.exceptions import Unauthorized
 
-import json, re
+import json, re, sys, traceback
 
 from authentication import *
 from converters import *
@@ -97,15 +98,22 @@ class Endpoint(object):
                         output = getattr(cls,method)(self,*args,**kwargs)
                         formatted = response(output,*args,**kwargs)
                         return start_response(200,[])(formatted)
+                    except Unauthorized:
+                        return self.error_401(env,start_response)
                     except:
+                        print sys.exc_info()
+                        traceback.print_tb(sys.exc_info()[2])
                         return self.error_501(env,start_response)
 
                 return handler
 
             def __error__(self,code,env,start_response,*args,**kwargs):
                 '''Error encountered, start handling the error'''
-                print code,env,start_response
-                return start_response(int(code),[])('error')
+                data = {
+                    'status': code,
+                    'message': str(sys.exc_info()[1])
+                }
+                return start_response(int(code),[])(json.dumps(data))
 
         __app__.add_url_rule(self.path, view_func=Wrapped.as_view(cls.__name__))
 

@@ -1,9 +1,11 @@
 from apy import Endpoint, app
+from apy.authentication import oauth_protect
 
 @Endpoint('/main')
 class Main:
     '''Basic example returns a json response'''
 
+    @oauth_protect
     def get(*args,**kwargs):
         print args,kwargs
         return {'response': ['hello','world']}

@@ -10,5 +10,6 @@ setup(
     packages= ['apy'],
     install_requires=[
         'flask>=8.0',
+        'oauth2>=1.5'
     ],
 )
