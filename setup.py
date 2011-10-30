@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "apy",
-    version = "0.0.1",
+    version = "0.2.0",
     author = "Stephen Young",
     author_email = "stephen@tryllo.com",
     description = ("Pythonic API development with flask"),
