@@ -6,6 +6,7 @@ import json, re, sys, traceback
 
 from authentication import *
 from converters import *
+from util import *
 
 __app__ = Flask(__name__)
 
@@ -41,7 +42,8 @@ class Endpoint(object):
         if content_type == 'json':
             return json.dumps(output)
         elif content_type == 'xml':
-            return "<response>XML is not yet supported</response>" % output
+            return DictToXML(output)
+            #return "<response>XML is not yet supported</response>" % output
         else:
             return output
 

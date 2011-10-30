@@ -9,8 +9,17 @@ oauth_server = oauth2.Server(signature_methods={
             # Supported signature methods
             'HMAC-SHA1': oauth2.SignatureMethod_HMAC_SHA1()
         })
+
+class MockConsumer(object):
+    key = 'ConsumerKey'
+    secret = 'ConsumerSecret'
  
-def validate_two_leg_oauth():
+def _get_consumer(key):
+    '''Example consumer function, generates a MockConsumer'''
+    print "Using an unbound mock oAuth consumer - for testing purposes only"
+    return MockConsumer()
+ 
+def validate_two_leg_oauth(consumer=_get_consumer):
     """
     Verify 2-legged oauth request. Parameters accepted as
     values in "Authorization" header, or as a GET request
@@ -34,26 +43,13 @@ def validate_two_leg_oauth():
  
     try:
         oauth_server.verify_request(req,
-            _get_consumer(request.values.get('oauth_consumer_key')),
+            consumer(request.values.get('oauth_consumer_key')),
             None)
         return True
     except oauth2.Error, e:
         raise Unauthorized(e)
     except:
         raise Unauthorized,"You failed to supply the necessary parameters to properly authenticate"
- 
-class MockConsumer(object):
-    key = 'ConsumerKey'
-    secret = 'ConsumerSecret'
- 
-def _get_consumer(key):
-    """
-    in real life we'd fetch a consumer object,
-    using the provided key, that
-    has at the bare minimum the attributes
-    key and secret.
-    """
-    return MockConsumer()
  
 def oauth_protect(f):
     @wraps(f)
