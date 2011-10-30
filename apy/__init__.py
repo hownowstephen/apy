@@ -33,7 +33,6 @@ class Endpoint(object):
     def mutatepath(self,base):
         '''Change the path to account for content type'''
         path = '%s<regex("(%s)?"):content_type>' % (base,'|'.join(self.types))
-        print "Generated new path descriptor: %s" % path
         return path
 
     def response(self,output,*args,**kwargs):
@@ -99,6 +98,8 @@ class Endpoint(object):
                         formatted = response(output,*args,**kwargs)
                         return start_response(200,[])(formatted)
                     except Unauthorized:
+                        print sys.exc_info()
+                        traceback.print_tb(sys.exc_info()[2])
                         return self.error_401(env,start_response)
                     except:
                         print sys.exc_info()
@@ -113,7 +114,8 @@ class Endpoint(object):
                     'status': code,
                     'message': str(sys.exc_info()[1])
                 }
-                return start_response(int(code),[])(json.dumps(data))
+                resp = start_response(int(code),None)
+                return resp(json.dumps(data))
 
         __app__.add_url_rule(self.path, view_func=Wrapped.as_view(cls.__name__))
 

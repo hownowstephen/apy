@@ -19,5 +19,5 @@ class Main:
     def delete(*args,**kwargs):
         return {'response': {'status': 'success'}}
 
-app.debug = True
+app.debug = False
 app.run()

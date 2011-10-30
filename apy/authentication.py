@@ -3,6 +3,7 @@ import oauth2
 from functools import wraps
 from flask import Flask, request
 from werkzeug.exceptions import Unauthorized
+from urlparse import urlparse
  
 oauth_server = oauth2.Server(signature_methods={
             # Supported signature methods
@@ -15,14 +16,16 @@ def validate_two_leg_oauth():
     values in "Authorization" header, or as a GET request
     or in a POST body.
     """
-    print request
     auth_header = {}
     if 'Authorization' in request.headers:
         auth_header = {'Authorization':request.headers['Authorization']}
- 
+
+    parsed = urlparse(request.url)
+    uri = "%s://%s%s" % (parsed.scheme,parsed.netloc,parsed.path)
+
     req = oauth2.Request.from_request(
         request.method,
-        request.url,
+        uri,
         headers=auth_header,
         # the immutable type of "request.values" prevents us from sending
         # that directly, so instead we have to turn it into a python
