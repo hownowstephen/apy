@@ -18,7 +18,6 @@ oauth_protect.default_consumer = some_other_consumer
 class Main:
     '''Basic example returns a json response'''
 
-    @oauth_protect()
     def get(*args,**kwargs):
         print args,kwargs
         return {'response': ['hello','world']}

@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 from flask.views import MethodView
 from werkzeug.exceptions import Unauthorized
 
@@ -98,7 +98,7 @@ class Endpoint(object):
                     try:
                         output = getattr(cls,method)(self,*args,**kwargs)
                         formatted = response(output,*args,**kwargs)
-                        return start_response(200,[])(formatted)
+                        return make_response(formatted,200)(env,start_response)
                     except Unauthorized:
                         print sys.exc_info()
                         traceback.print_tb(sys.exc_info()[2])
@@ -116,8 +116,7 @@ class Endpoint(object):
                     'status': code,
                     'message': str(sys.exc_info()[1])
                 }
-                resp = start_response(int(code),None)
-                return resp(json.dumps(data))
+                return make_response(json.dumps(data),code)(env,start_response)
 
         __app__.add_url_rule(self.path, view_func=Wrapped.as_view(cls.__name__))
 
