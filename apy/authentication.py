@@ -70,6 +70,8 @@ class oauth_protect():
             raise Unauthorized(e)
         except:
             print sys.exc_info()
+            import traceback
+            traceback.print_tb(sys.exc_info()[2])
             raise Unauthorized,"You failed to supply the necessary parameters to properly authenticate"
 
 

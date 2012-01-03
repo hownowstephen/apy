@@ -10,6 +10,8 @@ from util import *
 
 __app__ = Flask(__name__)
 
+__app__.always_authenticate = False
+
 class Endpoint(object):
     '''Main data endpoint class, manages'''    
 
@@ -72,9 +74,17 @@ class Endpoint(object):
             def httpgenerator(self,method):
                 '''Generator function to pre-define routing of http functions to the __http__ handler'''
 
-                def http_response(*args,**kwargs):
-                    '''Wrapper to return a HTTP response object'''
-                    return self.__http__(method,*args,**kwargs)
+                if __app__.always_authenticate:
+                    @oauth_protect()
+                    def http_response(*args,**kwargs):
+                        '''Wrapper to return a HTTP response object'''
+                        return self.__http__(method,*args,**kwargs)
+                else:
+                    
+                    def http_response(*args,**kwargs):
+                        '''Wrapper to return a HTTP response object'''
+                        return self.__http__(method,*args,**kwargs)
+
 
                 return http_response
 
@@ -100,12 +110,9 @@ class Endpoint(object):
                         formatted = response(output,*args,**kwargs)
                         return make_response(formatted,200)(env,start_response)
                     except Unauthorized:
-                        print sys.exc_info()
-                        traceback.print_tb(sys.exc_info()[2])
+                        self.error = 'The credentials you supplied were invalid'
                         return self.error_401(env,start_response)
                     except:
-                        print sys.exc_info()
-                        traceback.print_tb(sys.exc_info()[2])
                         return self.error_501(env,start_response)
 
                 return handler
@@ -114,9 +121,9 @@ class Endpoint(object):
                 '''Error encountered, start handling the error'''
                 data = {
                     'status': code,
-                    'message': str(sys.exc_info()[1])
+                    'message': self.error or 'Server encountered an unknown error'
                 }
-                return make_response(json.dumps(data),code)(env,start_response)
+                return make_response(json.dumps(data),"%s %s" % (code,str(sys.exc_info()[1])))(env,start_response)
 
         __app__.add_url_rule(self.path, view_func=Wrapped.as_view(cls.__name__))
 
