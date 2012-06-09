@@ -108,7 +108,9 @@ class Endpoint(object):
                     try:
                         output = getattr(cls,method)(self,*args,**kwargs)
                         formatted = response(output,*args,**kwargs)
-                        return make_response(formatted,200)(env,start_response)
+                        resp = make_response(formatted,200)(env,start_response)
+                        resp.headers['Access-Control-Allow-Origin'] = '*'
+                        return resp
                     except Unauthorized:
                         self.error = 'The credentials you supplied were invalid'
                         return self.error_401(env,start_response)
